@@ -1,0 +1,113 @@
+name: Build and Push PDF RAG Docker Image
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]  # 태그 기반 릴리스도 지원
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:  # 수동 실행 가능
+
+env:
+  DOCKER_IMAGE: pdf-rag-app
+  DOCKER_TAG: latest
+  
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Run Tests
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+      
+      - name: Install dependencies
+        run: poetry install --only=main
+      
+      - name: Run basic syntax check
+        run: |
+          poetry run python -m py_compile src/main.py
+          poetry run python -m py_compile src/rag_service.py
+          poetry run python -m py_compile src/ui_interface.py
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: test  # 테스트가 성공한 후에만 실행
+    name: Build and Push Docker Image
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      # Docker Buildx 설정 (멀티 플랫폼 빌드 지원)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      # Docker Hub 로그인
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      # 메타데이터 추출 (태그, 라벨 등)
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=ref,event=tag
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix={{branch}}-
+      
+      # Docker 이미지 빌드 및 푸시
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64  # 멀티 플랫폼 지원
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha  # GitHub Actions 캐시 사용
+          cache-to: type=gha,mode=max
+      
+      # 빌드 결과 출력
+      - name: Build Summary
+        run: |
+          echo "## 🐳 Docker Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "### Built Images:" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" | while read tag; do
+            echo "- \`$tag\`" >> $GITHUB_STEP_SUMMARY
+          done
+          echo "### 🚀 Usage:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "docker run -p 7860:7860 -e OPENAI_API_KEY=your-key ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}:latest" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+      
+      # Docker Hub에서 이미지 확인
+      - name: Verify pushed image
+        run: |
+          echo "🔍 Verifyi
