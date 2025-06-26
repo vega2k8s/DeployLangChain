@@ -127,7 +127,7 @@ echo "OPENAI_API_KEY=your-actual-api-key-here" > .env
 #### 방법 1: Docker 명령어 사용
 ```bash
 # 1. Docker 이미지 빌드
-docker build -t pdf-rag-app .
+docker build -t user/pdf-rag-app:0.1 .
 
 # 2. 컨테이너 실행
 docker run -p 7860:7860 --env-file .env --name pdf-rag-app user/pdf-rag-app:0.1

@@ -10,7 +10,7 @@ on:
 
 env:
   DOCKER_IMAGE: pdf-rag-app
-  DOCKER_TAG: latest
+  DOCKER_TAG: 0.2
   
 jobs:
   test:
@@ -73,7 +73,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}
+          images: ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr

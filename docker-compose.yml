@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   pdf-rag-app:
-    image: bmsvega2k/pdf-rag:0.1
+    image: bmsvega2k/pdf-rag-app:0.1
     # build: 
     #   context: .
     #   dockerfile: Dockerfile
