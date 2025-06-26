@@ -104,7 +104,7 @@ jobs:
           done
           echo "### 🚀 Usage:" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "docker run -p 7860:7860 -e OPENAI_API_KEY=your-key ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}:latest" >> $GITHUB_STEP_SUMMARY
+          echo "docker run -p 7860:7860 -e OPENAI_API_KEY=your-key ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
       
       # Docker Hub에서 이미지 확인
