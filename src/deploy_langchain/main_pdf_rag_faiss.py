@@ -239,7 +239,7 @@ if __name__ == "__main__":
     try:
         # Docker 컨테이너 내부에서 실행 중인지 확인
         hostname = socket.gethostname()
-        is_docker = os.path.exists('/.dockerenv') or hostname.startswith('pdf-rag-container')
+        is_docker = os.path.exists('/.dockerenv') or hostname.startswith('pdf-rag-app')
     except:
         is_docker = False
     
